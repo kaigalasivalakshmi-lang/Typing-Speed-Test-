@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Typing Speed Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e6f2ff;
+      color: #003366;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 51, 102, 0.2);
+      padding: 30px;
+      max-width: 700px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #003366;
+    }
+    #passage {
+      background: #cce6ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      min-height: 100px;
+      color: #00264d;
+      text-align: left;
+    }
+    #passage span.correct {
+      color: green;
+    }
+    #passage span.incorrect {
+      color: red;
+      text-decoration: underline;
+    }
+    textarea {
+      width: 100%;
+      height: 120px;
+      border-radius: 8px;
+      border: 1px solid #99c2ff;
+      padding: 10px;
+      font-size: 16px;
+      resize: none;
+      margin-bottom: 20px;
+      background: #f0f8ff;
+      color: #003366;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+      color: #003366;
+    }
+    .highlight {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1a75ff;
+      margin-top: 20px;
+    }
+    button, select {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      background: #3399ff;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover, select:hover {
+      background: #1a75ff;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Typing Speed Test</h1>
+    <label for="timeSelect">Choose duration: </label>
+    <select id="timeSelect">
+      <option value="60">1 min</option>
+      <option value="120">2 min</option>
+      <option value="180">3 min</option>
+      <option value="300">5 min</option>
+      <option value="600">10 min</option>
+      <option value="900">15 min</option>
+      <option value="1200">20 min</option>
+      <option value="1800">30 min</option>
+    </select>
+    <div id="passage"></div>
+    <textarea id="input" placeholder="Start typing here..." disabled></textarea>
+    <div class="stats">
+      <div>Time: <span id="time">0</span>s</div>
+      <div>WPM: <span id="wpm">0</span></div>
+      <div>Accuracy: <span id="accuracy">0</span>%</div>
+    </div>
+    <div id="results" class="highlight hidden"></div>
+    <button onclick="startTest()">Start</button>
+    <button onclick="restartTest()">Restart</button>
+  </div>
+
+  <script>
+    const passageEl = document.getElementById("passage");
+    const inputEl = document.getElementById("input");
+    const timeEl = document.getElementById("time");
+    const wpmEl = document.getElementById("wpm");
+    const accuracyEl = document.getElementById("accuracy");
+    const timeSelect = document.getElementById("timeSelect");
+    const resultsEl = document.getElementById("results");
+
+    let timeLimit = 60;
+    let timeLeft;
+    let timer;
+    let passageText = "";
+
+    timeSelect.addEventListener("change", () => {
+      timeLimit = parseInt(timeSelect.value);
+    });
+
+    function pickPassage() {
+      if (timeLimit <= 180) {
+        return "The quick brown fox jumps over the lazy dog. Practice typing daily.";
+      } else if (timeLimit <= 600) {
+        return "Typing is a practical skill that improves with consistent practice. In software development and other careers, typing quickly and accurately helps in saving time and reducing errors.";
+      } else if (timeLimit <= 1200) {
+        return "Small daily improvements can lead to remarkable progress. Typing tests are not just about speed but also about accuracy and consistency across longer passages. Focused practice sessions of ten to fifteen minutes can build both speed and endurance for typing tasks.";
+      } else {
+        return "Typing is a skill developed through patience and repetition. Long practice sessions, such as twenty to thirty minutes, help in building stamina and maintaining accuracy over extended periods. By practicing consistently, you will not only type faster but also reduce fatigue and increase your confidence in professional settings.";
+      }
+    }
+
+    function startTest() {
+      clearInterval(timer);
+      timeLeft = timeLimit;
+      inputEl.value = "";
+      passageText = pickPassage();
+      renderPassage();
+      timeEl.textContent = timeLeft;
+      wpmEl.textContent = 0;
+      accuracyEl.textContent = 0;
+      inputEl.disabled = false;
+      inputEl.focus();
+      resultsEl.classList.add("hidden");
+      passageEl.classList.remove("hidden");
+      inputEl.classList.remove("hidden");
+      timer = setInterval(updateTimer, 1000);
+    }
+
+    function restartTest() {
+      inputEl.disabled = true;
+      clearInterval(timer);
+      timeEl.textContent = 0;
+      wpmEl.textContent = 0;
+      accuracyEl.textContent = 0;
+      passageEl.textContent = "";
+      inputEl.value = "";
+      resultsEl.classList.add("hidden");
+    }
+
+    function updateTimer() {
+      if (timeLeft > 0) {
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+        calculateStats();
+      } else {
+        endTest();
+      }
+    }
+
+    function calculateStats() {
+      let inputText = inputEl.value;
+      if (inputText.length > passageText.length) {
+        inputText = inputText.substring(0, passageText.length);
+        inputEl.value = inputText;
+      }
+
+      const wordsTyped = inputText.trim().split(/\s+/).filter(Boolean).length;
+      const elapsedTime = timeLimit - timeLeft;
+      const wpm = elapsedTime > 0 ? Math.round((wordsTyped / elapsedTime) * 60) : 0;
+      wpmEl.textContent = wpm;
+
+      let correctChars = 0;
+      for (let i = 0; i < inputText.length; i++) {
+        if (inputText[i] === passageText[i]) {
+          correctChars++;
+        }
+      }
+      const accuracy = inputText.length > 0 ? Math.round((correctChars / inputText.length) * 100) : 0;
+      accuracyEl.textContent = accuracy;
+
+      renderPassage(inputText);
+
+      if (inputText.length === passageText.length) {
+        endTest();
+      }
+    }
+
+    function renderPassage(inputText = "") {
+      passageEl.innerHTML = "";
+      for (let i = 0; i < passageText.length; i++) {
+        const span = document.createElement("span");
+        span.textContent = passageText[i];
+        if (i < inputText.length) {
+          if (inputText[i] === passageText[i]) {
+            span.classList.add("correct");
+          } else {
+            span.classList.add("incorrect");
+          }
+        }
+        passageEl.appendChild(span);
+      }
+    }
+
+    function endTest() {
+      clearInterval(timer);
+      inputEl.disabled = true;
+      passageEl.classList.add("hidden");
+      inputEl.classList.add("hidden");
+      resultsEl.textContent = `Test Completed! WPM: ${wpmEl.textContent}, Accuracy: ${accuracyEl.textContent}%`;
+      resultsEl.classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
